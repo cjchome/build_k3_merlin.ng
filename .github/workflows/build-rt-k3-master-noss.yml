@@ -1,4 +1,4 @@
-name: build rt-k3-master
+name: build rt-k3-master-noss
 
 
 on: 
@@ -15,9 +15,9 @@ on:
     types: [started]
     
 env:
-  ET0MACADDR: "74:7D:24:D3:4E:D6"    
-  MACADDR1_24G: "00:90:4C:18:C2:34"
-  MACADDR2_5G: "00:90:4C:18:D2:34"
+  ET0MACADDR: "00:11:22:33:44:55"    
+  MACADDR1_24G: "00:11:22:33:44:66"
+  MACADDR2_5G: "00:11:22:33:44:77"
 
 jobs:
   build:
@@ -106,12 +106,14 @@ jobs:
         sed -i 's/^\(1:macaddr=\).*/\1${{ env.MACADDR1_24G }}/g' rt-k3_nvram.txt
         echo "replace mac 5g address from $(cat rt-k3_nvram.txt | grep ^2:macaddr) to ${{ env.MACADDR2_5G }}"
         sed -i 's/^\(2:macaddr=\).*/\1${{ env.MACADDR2_5G }}/g' rt-k3_nvram.txt
+        echo "close softcenter build"
+        cd /media/asuswrt/asuswrt-merlin.ng/release/src-rt
+        sed -i 's/SOFTCENTER=y/SOFTCENTER=n/g' target.mak
         
     - name: Build Firmware
       run: |
         #export PATH=$PATH:/opt/brcm/hndtools-mipsel-linux/bin:/opt/brcm/hndtools-mipsel-uclibc/bin:
         export PATH=$PATH:/opt/brcm-arm/bin
-
         cd  /media/asuswrt/asuswrt-merlin.ng/release/src-rt
         echo "add tag to version"
         sed -i 's/EXTENDNO=.*/&_${{ env.MERLIN_TAG }}/g' version.conf
@@ -137,6 +139,7 @@ jobs:
         sudo cp /media/asuswrt/asuswrt-merlin.ng/release/src-rt-7.14.114.x/src/cfe/build/broadcom/bcm947xx/compressed/rt-k3_nvram.txt /opt/images/
         sudo cp /media/asuswrt/asuswrt-merlin.ng/release/src-rt-7.14.114.x/src/cfe/cfe*.bin /opt/images/
         #sudo cp /media/asuswrt/asuswrt-merlin.ng/release/src-rt/version.conf /opt/images/
+        sudo cp /media/asuswrt/asuswrt-merlin.ng/release/src-rt/target.mak /opt/images/
         
         sha256sum /opt/images/* > /opt/images/checksum.txt
         
@@ -149,7 +152,7 @@ jobs:
         artifacts: "/opt/images/*.*"
         allowUpdates: true 
         commit: master 
-        tag: ${{ env.BUILD_DATE }}_master_k3_${{ env.MERLIN_TAG }}
+        tag: ${{ env.BUILD_DATE }}_master_k3_noss_${{ env.MERLIN_TAG }}
         body: |
           this is only a latest build from master
           version: https://github.com/godcong/asuswrt-merlin.ng/commit/${{ env.MERLIN_VERSION }}
